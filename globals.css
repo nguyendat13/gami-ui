@@ -1,0 +1,62 @@
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+
+body {
+  background: #fdf6e3 url("/wood-texture.jpg");
+  background-size: cover;
+  color: #3e2f1c;
+  font-family: 'Noto Serif', serif;
+}
+
+/* Nút bấm kiểu cổ điển Việt Nam */
+.btn {
+  background-color: #c19a6b;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s ease;
+}
+.btn:hover {
+  background-color: #b08968;
+}
+
+/* Bàn cờ Caro full màn hình */
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
+  gap: 1px;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  padding: 1rem;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease forwards;
+}
