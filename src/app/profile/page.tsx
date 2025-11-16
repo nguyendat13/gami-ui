@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { apiGet, apiPut, apiPost } from "@/utils/api";
-import { getUserId } from "@/utils/token";
+import { getUserId, getRedirectPathByRole } from "@/utils/token";
 import Link from "next/link";
 
 export default function ProfilePage() {
@@ -45,7 +45,6 @@ export default function ProfilePage() {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  // STEP 1: Cập nhật thông tin
   const handleUpdate = async () => {
     try {
       setLoading(true);
@@ -57,32 +56,15 @@ export default function ProfilePage() {
       const isChangingSensitive = isChangingUsername || isChangingEmail;
 
       if (isChangingSensitive) {
-        // Tạo payload cho OTP - chỉ gửi fields thực sự thay đổi
-        const payloadOtp: any = {
-          userId: user.userId,
-        };
-        
-        if (isChangingUsername && user.username.trim()) {
-          payloadOtp.newUsername = user.username;
-        }
-        if (isChangingEmail && user.email.trim()) {
-          payloadOtp.newEmail = user.email;
-        }
+        const payloadOtp: any = { userId: user.userId };
+        if (isChangingUsername && user.username.trim()) payloadOtp.newUsername = user.username;
+        if (isChangingEmail && user.email.trim()) payloadOtp.newEmail = user.email;
 
-        console.log("Gửi payload đổi username/email với OTP:", payloadOtp);
         await apiPost("/User/request-profile-update", payloadOtp, token);
         alert("OTP đã gửi vào email cũ!");
         setStep("otp");
       } else {
-        // Nếu chỉ đổi fullName/phone → update trực tiếp
-        const payloadUpdate = {
-          userId: user.userId,
-          username: user.username,
-          fullName: user.fullName,
-          email: user.email,
-          phone: user.phone,
-          roleId: 0,
-        };
+        const payloadUpdate = { ...user, roleId: 0 };
         const data = await apiPut("/User/update-profile", payloadUpdate, token);
         setUser(data);
         setOriginal({ username: data.username, email: data.email });
@@ -95,38 +77,23 @@ export default function ProfilePage() {
     }
   };
 
-  // STEP 2: Xác nhận OTP
   const handleConfirmOtp = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Người dùng chưa đăng nhập.");
 
-      const isChangingUsername = user.username !== original.username;
-      const isChangingEmail = user.email !== original.email;
-
-      const payload: any = {
-        userId: user.userId,
-        otpCode: otp,
-      };
-
-      if (isChangingUsername && user.username.trim()) {
-        payload.newUsername = user.username;
-      }
-      if (isChangingEmail && user.email.trim()) {
-        payload.newEmail = user.email;
-      }
+      const payload: any = { userId: user.userId, otpCode: otp };
+      if (user.username !== original.username) payload.newUsername = user.username;
+      if (user.email !== original.email) payload.newEmail = user.email;
 
       const data = await apiPost("/User/confirm-profile-update", payload, token);
-      setUser(data); // backend trả về user đã cập nhật
+      setUser(data);
       setOriginal({ username: data.username, email: data.email });
       alert("Cập nhật thành công!");
       setStep("done");
-      
-      // Reload trang sau 1.5 giây
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
+
+      setTimeout(() => window.location.reload(), 100);
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -135,80 +102,91 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white/90 rounded-xl shadow-lg">
-      <h1 className="text-2xl font-bold mb-4 text-[#333]">Hồ sơ của bạn</h1>
-
-      {step === "form" && (
-        <>
-          <input
-            type="text"
-            name="username"
-            value={user.username}
-            onChange={handleChange}
-            placeholder="Username"
-            className="w-full p-2 border rounded-md mb-2 text-gray-900"
-          />
-          <input
-            type="text"
-            name="fullName"
-            value={user.fullName}
-            onChange={handleChange}
-            placeholder="Họ và tên"
-            className="w-full p-2 border rounded-md mb-2 text-gray-900"
-          />
-          <input
-            type="email"
-            name="email"
-            value={user.email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="w-full p-2 border rounded-md mb-2 text-gray-900"
-          />
-          <input
-            type="text"
-            name="phone"
-            value={user.phone}
-            onChange={handleChange}
-            placeholder="Số điện thoại"
-            className="w-full p-2 border rounded-md mb-4 text-gray-900"
-          />
-
-          <button
-            onClick={handleUpdate}
-            disabled={loading}
-            className="w-full bg-[#c19a6b] text-white py-2 rounded-md shadow-md"
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 p-4 font-sans">
+      <div className="w-full max-w-lg bg-slate-900/80 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-cyan-500/30">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+            👤 Hồ sơ của bạn
+          </h1>
+          <Link
+            href={getRedirectPathByRole()}
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-4 py-2 rounded-lg shadow-md font-semibold transition-transform hover:scale-105"
           >
-            {loading ? "Đang xử lý..." : "Cập nhật hồ sơ"}
-          </button>
-        </>
-      )}
+            📊 Bảng điều khiển
+          </Link>
+        </div>
 
-      {step === "otp" && (
-        <>
-          <input
-            type="text"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="Nhập mã OTP"
-            className="w-full p-2 border rounded-md mb-4 text-gray-900"
-          />
+        {step === "form" && (
+          <form className="flex flex-col gap-4">
+            <input
+              type="text"
+              name="username"
+              value={user.username}
+              onChange={handleChange}
+              placeholder="Username"
+              className="w-full px-4 py-3 bg-slate-800 border border-cyan-500/50 rounded-lg focus:border-cyan-400 focus:outline-none text-white"
+            />
+            <input
+              type="text"
+              name="fullName"
+              value={user.fullName}
+              onChange={handleChange}
+              placeholder="Họ và tên"
+              className="w-full px-4 py-3 bg-slate-800 border border-cyan-500/50 rounded-lg focus:border-cyan-400 focus:outline-none text-white"
+            />
+            <input
+              type="email"
+              name="email"
+              value={user.email}
+              onChange={handleChange}
+              placeholder="Email"
+              className="w-full px-4 py-3 bg-slate-800 border border-cyan-500/50 rounded-lg focus:border-cyan-400 focus:outline-none text-white"
+            />
+            <input
+              type="text"
+              name="phone"
+              value={user.phone}
+              onChange={handleChange}
+              placeholder="Số điện thoại"
+              className="w-full px-4 py-3 bg-slate-800 border border-cyan-500/50 rounded-lg focus:border-cyan-400 focus:outline-none text-white"
+            />
+            <button
+              type="button"
+              onClick={handleUpdate}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-3 rounded-lg shadow-md transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "⏳ Đang xử lý..." : "Cập nhật hồ sơ"}
+            </button>
+          </form>
+        )}
 
-          <button
-            onClick={handleConfirmOtp}
-            disabled={loading}
-            className="w-full bg-green-600 text-white py-2 rounded-md shadow-md"
-          >
-            {loading ? "Đang xác nhận..." : "Xác nhận OTP"}
-          </button>
-        </>
-      )}
+        {step === "otp" && (
+          <div className="flex flex-col gap-4">
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Nhập mã OTP"
+              className="w-full px-4 py-3 bg-slate-800 border border-cyan-500/50 rounded-lg focus:border-cyan-400 focus:outline-none text-white"
+            />
+            <button
+              onClick={handleConfirmOtp}
+              disabled={loading}
+              className="w-full bg-linear-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "⏳ Đang xác nhận..." : "✅ Xác nhận OTP"}
+            </button>
+          </div>
+        )}
 
-      <Link
-        href="/change-password"
-        className="w-full block text-center bg-[#8c6746] text-white py-2 rounded-md shadow-md mt-3"
-      >
-        Đổi mật khẩu
-      </Link>
+        <Link
+          href="/change-password"
+          className="w-full block text-center bg-linear-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition transform hover:scale-105 mt-4"
+        >
+          🔐 Đổi mật khẩu
+        </Link>
+      </div>
     </div>
   );
 }

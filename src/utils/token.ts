@@ -19,8 +19,26 @@ export function getTokenPayload(): TokenPayload | null {
   return jwtDecode<TokenPayload>(token);
 }
 
+export function getRoleId(): number | null {
+  const payload = getTokenPayload();
+  return payload ? parseInt(payload.roleId) : null;
+}
 
 export function getUserId(): number | null {
   const payload = getTokenPayload();
   return payload ? parseInt(payload.userId) : null;
+}
+
+export function getRedirectPathByRole(): string {
+  const roleId = getRoleId();
+  switch (roleId) {
+    case 1:
+      return "/auth/superadmin";
+    case 2:
+      return "/auth/admin";
+    case 3:
+      return "/auth/user";
+    default:
+      return "/";
+  }
 }
