@@ -60,7 +60,7 @@ export default function GameNavbar({ gameName, gameIcon }: GameNavbarProps) {
           Hồ sơ
         </Link>
         <Link
-          href="/"
+          href="/leaderboard"
           className="flex items-center gap-2 text-gray-300 hover:text-cyan-400 px-3 py-2 rounded-lg hover:bg-blue-900/50 transition text-sm font-semibold"
         >
           <Trophy size={18} />

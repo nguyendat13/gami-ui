@@ -1,11 +1,25 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { Users, MessageCircle, Trophy, Zap, Heart, Share2 } from "lucide-react";
+import { Users, MessageCircle, Trophy, Zap, Heart, Share2, Crown, Medal } from "lucide-react";
+import Link from "next/link";
+import { getLeaderboard } from "@/lib/userService";
+import LiveLeaderboardMini from "@/components/mini-page/LiveLeaderboardMini";
+interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  points: number;
+  wins: number;
+}
+
+interface Game {
+  id: string;
+  name: string;
+}
 
 export default function CommunityPage() {
-  const [activeTab, setActiveTab] = useState("members");
+  const [activeTab, setActiveTab] = useState<string>("members");
+  const [activeGame, setActiveGame] = useState<string>("caro");
 
   const members = [
     { id: 1, name: "Nguyễn Văn A", avatar: "🎯", rank: "Master", games: 1250 },
@@ -52,13 +66,49 @@ export default function CommunityPage() {
     },
   ];
 
-  const leaderboard = [
-    { rank: 1, name: "Nguyễn Văn A", points: 5420, wins: 1250 },
-    { rank: 2, name: "Trần Thị B", points: 4890, wins: 890 },
-    { rank: 3, name: "Võ Thị F", points: 4650, wins: 765 },
-    { rank: 4, name: "Lê Quốc D", points: 4230, wins: 432 },
-    { rank: 5, name: "Phạm Huy E", points: 3920, wins: 210 },
+  const leaderboards: Record<string, LeaderboardEntry[]> = {
+    caro: [
+      { rank: 1, name: "Nguyễn Văn A", points: 5420, wins: 1250 },
+      { rank: 2, name: "Trần Thị B", points: 4890, wins: 890 },
+      { rank: 3, name: "Võ Thị F", points: 4650, wins: 765 },
+      { rank: 4, name: "Lê Quốc D", points: 4230, wins: 432 },
+      { rank: 5, name: "Phạm Huy E", points: 3920, wins: 210 },
+    ],
+    chess: [
+      { rank: 1, name: "Trần Thị B", points: 6120, wins: 1150 },
+      { rank: 2, name: "Nguyễn Văn A", points: 5680, wins: 987 },
+      { rank: 3, name: "Hoàng Minh C", points: 5240, wins: 856 },
+      { rank: 4, name: "Phạm Huy E", points: 4920, wins: 765 },
+      { rank: 5, name: "Võ Thị F", points: 4650, wins: 654 },
+    ],
+    oanuquan: [
+      { rank: 1, name: "Hoàng Minh C", points: 5890, wins: 1123 },
+      { rank: 2, name: "Võ Thị F", points: 5420, wins: 987 },
+      { rank: 3, name: "Phạm Huy E", points: 5100, wins: 876 },
+      { rank: 4, name: "Nguyễn Văn A", points: 4780, wins: 754 },
+      { rank: 5, name: "Lê Quốc D", points: 4520, wins: 645 },
+    ],
+    gomoku: [
+      { rank: 1, name: "Phạm Huy E", points: 5640, wins: 1089 },
+      { rank: 2, name: "Lê Quốc D", points: 5280, wins: 956 },
+      { rank: 3, name: "Nguyễn Văn A", points: 4950, wins: 834 },
+      { rank: 4, name: "Trần Thị B", points: 4620, wins: 723 },
+      { rank: 5, name: "Hoàng Minh C", points: 4380, wins: 612 },
+    ],
+  };
+
+  const games: Game[] = [
+    { id: "caro", name: "🎯 Caro" },
+    { id: "chess", name: "♔ Cờ Vua" },
+    { id: "oanuquan", name: "🎪 Ô Ăn Quan" },
   ];
+
+  const getRankColor = (rank: number): string => {
+    if (rank === 1) return "bg-yellow-500/30 text-yellow-400";
+    if (rank === 2) return "bg-gray-500/30 text-gray-300";
+    if (rank === 3) return "bg-orange-500/30 text-orange-400";
+    return "bg-cyan-500/20 text-cyan-400";
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-950 via-blue-950 to-slate-950 text-white pt-24">
@@ -112,10 +162,10 @@ export default function CommunityPage() {
             {/* Left Column - Posts & Tabs */}
             <div className="lg:col-span-2">
               {/* Tabs */}
-              <div className="flex gap-4 mb-8 border-b border-cyan-500/30">
+              <div className="flex gap-4 mb-8 border-b border-cyan-500/30 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab("members")}
-                  className={`pb-4 px-4 font-semibold transition ${
+                  className={`pb-4 px-4 font-semibold transition whitespace-nowrap ${
                     activeTab === "members"
                       ? "border-b-2 border-cyan-400 text-cyan-400"
                       : "text-gray-400 hover:text-cyan-300"
@@ -125,7 +175,7 @@ export default function CommunityPage() {
                 </button>
                 <button
                   onClick={() => setActiveTab("posts")}
-                  className={`pb-4 px-4 font-semibold transition ${
+                  className={`pb-4 px-4 font-semibold transition whitespace-nowrap ${
                     activeTab === "posts"
                       ? "border-b-2 border-cyan-400 text-cyan-400"
                       : "text-gray-400 hover:text-cyan-300"
@@ -135,7 +185,7 @@ export default function CommunityPage() {
                 </button>
                 <button
                   onClick={() => setActiveTab("leaderboard")}
-                  className={`pb-4 px-4 font-semibold transition ${
+                  className={`pb-4 px-4 font-semibold transition whitespace-nowrap ${
                     activeTab === "leaderboard"
                       ? "border-b-2 border-cyan-400 text-cyan-400"
                       : "text-gray-400 hover:text-cyan-300"
@@ -208,47 +258,16 @@ export default function CommunityPage() {
                 </div>
               )}
 
-              {/* Leaderboard Tab */}
+           {/* Leaderboard Tab – GỌI API THẬT, DỮ LIỆU LIVE, SIÊU ĐẸP */}
               {activeTab === "leaderboard" && (
-                <div className="space-y-3">
-                  {leaderboard.map((entry) => (
-                    <div
-                      key={entry.rank}
-                      className="bg-linear-to-br from-slate-900/50 to-blue-900/50 p-4 rounded-lg border border-cyan-500/20 flex items-center justify-between hover:border-cyan-400/50 transition"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-lg ${
-                            entry.rank === 1
-                              ? "bg-yellow-500/30 text-yellow-400"
-                              : entry.rank === 2
-                              ? "bg-gray-500/30 text-gray-300"
-                              : entry.rank === 3
-                              ? "bg-orange-500/30 text-orange-400"
-                              : "bg-cyan-500/20 text-cyan-400"
-                          }`}
-                        >
-                          {entry.rank}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-white">{entry.name}</h3>
-                          <p className="text-sm text-gray-400">{entry.wins} ván thắng</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-cyan-400">{entry.points}</p>
-                        <p className="text-xs text-gray-500">Điểm</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <LiveLeaderboardMini activeGame={activeGame} games={games} setActiveGame={setActiveGame} />
               )}
             </div>
 
             {/* Right Column - Sidebar */}
             <div className="space-y-6">
               {/* Create Post Box */}
-              <div className="bg-linear-to-br from-slate-900/80 to-blue-900/80 p-6 rounded-lg border border-cyan-500/30">
+              {/* <div className="bg-linear-to-br from-slate-900/80 to-blue-900/80 p-6 rounded-lg border border-cyan-500/30">
                 <h3 className="font-bold text-white mb-4">📝 Tạo Bài Viết</h3>
                 <textarea
                   placeholder="Chia sẻ ý kiến của bạn..."
@@ -258,36 +277,36 @@ export default function CommunityPage() {
                 <button className="w-full bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-2 rounded-lg transition transform hover:scale-105">
                   Đăng Bài
                 </button>
-              </div>
+              </div> */}
 
               {/* Quick Links */}
               <div className="bg-linear-to-br from-slate-900/80 to-blue-900/80 p-6 rounded-lg border border-cyan-500/30">
                 <h3 className="font-bold text-white mb-4">🔗 Liên Kết Nhanh</h3>
                 <div className="space-y-2">
-                  <Link
-                    href="/profile"
+                  <button
+                    onClick={() => {}}
                     className="block text-cyan-400 hover:text-cyan-300 transition font-semibold"
                   >
                     👤 Hồ Sơ Của Tôi
-                  </Link>
-                  <Link
-                    href="#"
+                  </button>
+                  <button
+                    onClick={() => {}}
                     className="block text-cyan-400 hover:text-cyan-300 transition font-semibold"
                   >
                     🏆 Giải Đấu
-                  </Link>
-                  <Link
-                    href="#"
+                  </button>
+                  <button
+                    onClick={() => {}}
                     className="block text-cyan-400 hover:text-cyan-300 transition font-semibold"
                   >
                     🎮 Những Trò Chơi Của Tôi
-                  </Link>
-                  <Link
-                    href="#"
+                  </button>
+                  <button
+                    onClick={() => {}}
                     className="block text-cyan-400 hover:text-cyan-300 transition font-semibold"
                   >
                     ⚙️ Cài Đặt
-                  </Link>
+                  </button>
                 </div>
               </div>
 
@@ -297,9 +316,15 @@ export default function CommunityPage() {
                 <p className="text-sm text-gray-300 mb-4">
                   Tham gia cộng đồng để trao đổi chiến lược, tìm đối thủ mạnh và nâng cao kỹ năng chơi game của bạn!
                 </p>
-                <button className="w-full bg-linear-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 rounded-lg transition transform hover:scale-105">
-                  Tìm Hiểu Thêm
-                </button>
+              <Link
+          href="/community/chat"
+          className="block w-full bg-gradient-to-r from-purple-500 to-pink-500 
+                    hover:from-purple-600 hover:to-pink-600 text-white font-bold 
+                    text-center py-3 rounded-lg transition transform hover:scale-105"
+        >
+          Tìm Hiểu Thêm
+        </Link>
+
               </div>
             </div>
           </div>

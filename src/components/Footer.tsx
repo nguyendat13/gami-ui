@@ -76,12 +76,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-gray-400 hover:text-cyan-400 transition">
-                  Giải Đấu
+                <Link href="/community/events" className="text-gray-400 hover:text-cyan-400 transition">
+                  Sự kiện
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-gray-400 hover:text-cyan-400 transition">
+                <Link href="/leaderboard" className="text-gray-400 hover:text-cyan-400 transition">
                   Bảng Xếp Hạng
                 </Link>
               </li>
@@ -93,17 +93,17 @@ export default function Footer() {
             <h4 className="font-bold text-white mb-4 text-lg">💬 Hỗ Trợ</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/about" className="text-gray-400 hover:text-cyan-400 transition">
+                <Link href="/support/about" className="text-gray-400 hover:text-cyan-400 transition">
                   Giới Thiệu
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-gray-400 hover:text-cyan-400 transition">
+                <Link href="/support/terms" className="text-gray-400 hover:text-cyan-400 transition">
                   Điều Khoản Dịch Vụ
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-gray-400 hover:text-cyan-400 transition">
+                <Link href="/support/privacy" className="text-gray-400 hover:text-cyan-400 transition">
                   Chính Sách Bảo Mật
                 </Link>
               </li>
